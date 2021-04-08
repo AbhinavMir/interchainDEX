@@ -86,6 +86,9 @@ import (
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
+	"github.com/abhinav/interchainDEX/x/ibcdex"
+	ibcdexkeeper "github.com/abhinav/interchainDEX/x/ibcdex/keeper"
+	ibcdextypes "github.com/abhinav/interchainDEX/x/ibcdex/types"
 )
 
 const Name = "interchainDEX"
@@ -133,6 +136,7 @@ var (
 		vesting.AppModuleBasic{},
 		interchainDEX.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
+		ibcdex.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -205,6 +209,8 @@ type App struct {
 
 	interchainDEXKeeper interchainDEXkeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
+	ScopedIbcdexKeeper capabilitykeeper.ScopedKeeper
+	ibcdexKeeper       ibcdexkeeper.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -235,6 +241,7 @@ func New(
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		interchainDEXtypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
+		ibcdextypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -318,9 +325,6 @@ func New(
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 
 	// Create static IBC router, add transfer route, then set and seal it
-	ibcRouter := porttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferModule)
-	app.IBCKeeper.SetRouter(ibcRouter)
 
 	// Create evidence Keeper for to register the IBC light client misbehaviour evidence route
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -334,6 +338,23 @@ func New(
 	)
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
+	scopedIbcdexKeeper := app.CapabilityKeeper.ScopeToModule(ibcdextypes.ModuleName)
+	app.ScopedIbcdexKeeper = scopedIbcdexKeeper
+	app.ibcdexKeeper = *ibcdexkeeper.NewKeeper(
+		appCodec,
+		keys[ibcdextypes.StoreKey],
+		keys[ibcdextypes.MemStoreKey],
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
+		scopedIbcdexKeeper,
+	)
+	ibcdexModule := ibcdex.NewAppModule(appCodec, app.ibcdexKeeper)
+
+	ibcRouter := porttypes.NewRouter()
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferModule)
+	// this line is used by starport scaffolding # ibc/app/router
+	ibcRouter.AddRoute(ibcdextypes.ModuleName, ibcdexModule)
+	app.IBCKeeper.SetRouter(ibcRouter)
 
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
@@ -371,6 +392,7 @@ func New(
 		transferModule,
 		interchainDEX.NewAppModule(appCodec, app.interchainDEXKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
+		ibcdexModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -405,6 +427,7 @@ func New(
 		ibctransfertypes.ModuleName,
 		interchainDEXtypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
+		ibcdextypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -598,6 +621,7 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
+	paramsKeeper.Subspace(ibcdextypes.ModuleName)
 
 	return paramsKeeper
 }

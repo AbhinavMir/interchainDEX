@@ -1,0 +1,87 @@
+syntax = "proto3";
+package abhinav.interchainDEX.ibcdex;
+
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+// this line is used by starport scaffolding # 1
+import "ibcdex/denomTrace.proto";
+import "ibcdex/buyOrderBook.proto";
+import "ibcdex/sellOrderBook.proto";
+
+option go_package = "github.com/abhinav/interchainDEX/x/ibcdex/types";
+
+// Query defines the gRPC querier service.
+service Query {
+    // this line is used by starport scaffolding # 2
+	rpc DenomTrace(QueryGetDenomTraceRequest) returns (QueryGetDenomTraceResponse) {
+		option (google.api.http).get = "/abhinav/interchainDEX/ibcdex/denomTrace/{index}";
+	}
+	rpc DenomTraceAll(QueryAllDenomTraceRequest) returns (QueryAllDenomTraceResponse) {
+		option (google.api.http).get = "/abhinav/interchainDEX/ibcdex/denomTrace";
+	}
+
+	rpc BuyOrderBook(QueryGetBuyOrderBookRequest) returns (QueryGetBuyOrderBookResponse) {
+		option (google.api.http).get = "/abhinav/interchainDEX/ibcdex/buyOrderBook/{index}";
+	}
+	rpc BuyOrderBookAll(QueryAllBuyOrderBookRequest) returns (QueryAllBuyOrderBookResponse) {
+		option (google.api.http).get = "/abhinav/interchainDEX/ibcdex/buyOrderBook";
+	}
+
+	rpc SellOrderBook(QueryGetSellOrderBookRequest) returns (QueryGetSellOrderBookResponse) {
+		option (google.api.http).get = "/abhinav/interchainDEX/ibcdex/sellOrderBook/{index}";
+	}
+	rpc SellOrderBookAll(QueryAllSellOrderBookRequest) returns (QueryAllSellOrderBookResponse) {
+		option (google.api.http).get = "/abhinav/interchainDEX/ibcdex/sellOrderBook";
+	}
+
+}
+
+// this line is used by starport scaffolding # 3
+message QueryGetDenomTraceRequest {
+	string index = 1;
+}
+
+message QueryGetDenomTraceResponse {
+	DenomTrace DenomTrace = 1;
+}
+
+message QueryAllDenomTraceRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllDenomTraceResponse {
+	repeated DenomTrace DenomTrace = 1;
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+message QueryGetBuyOrderBookRequest {
+	string index = 1;
+}
+
+message QueryGetBuyOrderBookResponse {
+	BuyOrderBook BuyOrderBook = 1;
+}
+
+message QueryAllBuyOrderBookRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllBuyOrderBookResponse {
+	repeated BuyOrderBook BuyOrderBook = 1;
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+message QueryGetSellOrderBookRequest {
+	string index = 1;
+}
+
+message QueryGetSellOrderBookResponse {
+	SellOrderBook SellOrderBook = 1;
+}
+
+message QueryAllSellOrderBookRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllSellOrderBookResponse {
+	repeated SellOrderBook SellOrderBook = 1;
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
